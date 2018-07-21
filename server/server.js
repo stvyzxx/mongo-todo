@@ -49,5 +49,6 @@ app.get('/todos/:id', (req, res) => {
 });
 
 app.listen(port, () => {
+  console.log(JSON.stringify(process.env));
   console.log(`Started on port ${port}`);
 });
