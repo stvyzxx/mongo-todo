@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const { ObjectID } = require('mongodb');
 
 const { Todo } = require('./models/todo');
+const { mongoose } = require('./db/mongoose');
 
 const port = process.env.PORT || 3000;
 
@@ -15,12 +16,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/todos', (req, res) => {
-  res.send('from todos');
-  // Todo.find().then(todos => {
-  //   res.send({ todos });
-  // }, e => {
-  //   res.status(400).send(e); 
-  // });
+  Todo.find().then(todos => {
+    res.send({ todos });
+  }, e => {
+    res.status(400).send(e); 
+  });
 });
 
 app.post('/todos', (req, res) => {
@@ -54,6 +54,5 @@ app.get('/todos/:id', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(JSON.stringify(process.env));
   console.log(`Started on port ${port}`);
 });
