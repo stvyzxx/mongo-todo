@@ -18,17 +18,20 @@ app.get('/', (req, res) => {
   res.send('worrap');
 });
 
-app.get('/todos', (req, res) => {
-  Todo.find().then(todos => {
+app.get('/todos', authtenticate, (req, res) => {
+  Todo.find({
+    _creator: req.user._id
+  }).then(todos => {
     res.send({ todos });
   }, e => {
     res.status(400).send(e); 
   });
 });
 
-app.post('/todos', (req, res) => {
+app.post('/todos', authtenticate, (req, res) => {
   const todo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   });
 
   todo.save().then(doc => {
@@ -38,14 +41,17 @@ app.post('/todos', (req, res) => {
   });
 });
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authtenticate, (req, res) => {
   const id = req.params.id;
 
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
 
-  Todo.findById(id).then(todo => {
+  Todo.findOne({
+    _id: id,
+    _creator: req.user._id
+  }).then(todo => {
     if (todo) {
       return res.send({ todo });
     }
@@ -56,14 +62,17 @@ app.get('/todos/:id', (req, res) => {
   });
 });
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authtenticate, (req, res) => {
   const id = req.params.id;
 
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
 
-  Todo.findByIdAndRemove(id).then(todo => {
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }).then(todo => {
     if (todo) {
       return res.status(200).send();
     }
@@ -74,7 +83,7 @@ app.delete('/todos/:id', (req, res) => {
   });
 });
 
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authtenticate, (req, res) => {
   const id = req.params.id;
   const body = _.pick(req.body, ['text', 'completed']);
 
@@ -89,7 +98,10 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null;
   }
 
-  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+  Todo.findOneAndUpdate({
+    _id: id,
+    _creator: req.user._id
+  }, {$set: body}, {new: true}).then((todo) => {
     if (!todo) {
       return res.status(404).send();
     }
@@ -121,14 +133,23 @@ app.get('/users/me', authtenticate, (req, res) => {
 
 app.post('/users/login', (req, res) => {
   const body = _.pick(req.body, ['email', 'password']);
-  
+  console.log(body)
   User.findByCredentials(body.email, body.password)
     .then(user => {
+      console.log('yrs')
       return user.generateAuthToken()
         .then(token => res.header('x-auth', token).send(user));
     })
     .catch(e => res.status(400).send());
 }); 
+
+app.delete('/user/me/token', authtenticate, (req, res) => {
+  req.user.removeToken(req.token).then(() => {
+    res.status(200).send();
+  }, () => {
+    res.status(400).send();
+  });
+});
 
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
