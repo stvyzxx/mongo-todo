@@ -1,9 +1,10 @@
-const config = require('./config/config');
-
+const optionalRequire = require("optional-require")(require);
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
 const { ObjectID } = require('mongodb');
+
+const config = optionalRequire('./config/config');
 
 const { Todo } = require('./models/todo');
 const { User } = require('./models/user');
